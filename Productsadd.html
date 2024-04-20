@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Management</title>
+<style>
+    body{
+        background-color: rgb(238, 244, 248);
+        background-image:url("https://images.pexels.com/photos/304664/pexels-photo-304664.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500");
+        background-size: cover;
+    }
+    #header-links{
+          text-align:center;
+    }
+    #header-links {
+    text-align: center;
+    background-color: #f9f9f9;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.header-link {
+    display: inline-block;
+    font-size: 18px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #333; 
+    margin: 0 15px;
+    padding: 10px 15px;
+    transition: color 0.3s ease;
+}
+
+.header-link:hover {
+    color: #4c93af; 
+}
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    table, th, td {
+        border: 1px solid black;
+        padding: 8px;
+    }
+   .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+   #productForm {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+   }
+
+#productForm label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+#productForm input[type="text"] {
+    width: calc(100% - 16px);
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#productForm input[type="text"]:focus {
+    outline: none;
+    border-color: #4c93af;
+}
+
+#productForm button {
+    width: 100%;
+    padding: 10px 20px;
+    background-color: #4c93af;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#productForm button:hover {
+    background-color: #4c93af;
+}
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+#productForm {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+  margin: auto;
+  margin-top: 50px;
+}
+/* Add color properties for edit and delete buttons */
+.actions-button {
+    background-color: #4c93af;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-right: 5px; /* Adjust spacing between buttons */
+}
+
+.actions-button:hover {
+    background-color: #0077a7; /* Darken the background color on hover */
+}
+
+
+</style>
+</head>
+<body>
+<div id="productForm">
+    <label for="prodName">Product Name:</label>
+    <input type="text" id="prodName" required><br>
+    <label for="prodDesc">Product Description:</label>
+    <input type="text" id="prodDesc" required><br>
+    <label for="prodPrice">Product Price:</label>
+    <input type="text" id="prodPrice" required><br>
+    <label for="ImageUrl">Image Url:</label>
+    <input type="text" id="ImageUrl" ><br>
+    <button type="button" id="submitBtn">Submit</button>
+</div>
+
+<br>
+
+<table id="productTable">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Price</th>
+      <th>Image</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="productlist"></tbody>
+</table>
+
+<script> 
+const productForm = document.getElementById('productForm');
+const productNameInput = document.getElementById('prodName');
+const productDescInput = document.getElementById('prodDesc');
+const prodPriceInput = document.getElementById('prodPrice');
+const imageUrlInput = document.getElementById('ImageUrl');
+const submitBtn = document.getElementById('submitBtn');
+
+let products = JSON.parse(localStorage.getItem('products')) || [];
+
+addFromLocalStorage();
+
+function addProduct() {
+    const productName = productNameInput.value;
+    const productDesc = productDescInput.value;
+    const prodPrice = prodPriceInput.value;
+    const imageUrl = imageUrlInput.value;
+
+    if (!productName || !productDesc || !prodPrice || !imageUrl) {
+        alert("Please fill in all fields");
+        return;
+    }
+
+    const product = {
+        name: productName,
+        desc: productDesc,
+        price: prodPrice,
+        img: imageUrl,
+        id: Date.now(),
+        qty: 0,
+    };
+    products.push(product);
+    localStorage.setItem('products', JSON.stringify(products));
+    renderProducts(product);
+    productNameInput.value = "";
+    productDescInput.value = "";
+    prodPriceInput.value = "";
+    imageUrlInput.value = "";
+
+    // Send POST request to server
+    fetch("/addProduct", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            productName,
+            description: productDesc,
+            price: prodPrice,
+            imageUrl,
+        })
+    })
+    .then(response => response.text())
+    .then(data => console.log(data))
+    .catch(error => console.error('Error:', error));
+}
+
+submitBtn.addEventListener('click', addProduct);
+
+function renderProducts(product) {
+    const tr = document.createElement('tr');
+
+    const nameCell = document.createElement('td');
+    nameCell.textContent = product.name;
+    tr.appendChild(nameCell);
+
+    const descCell = document.createElement('td');
+    descCell.textContent = product.desc;
+    tr.appendChild(descCell);
+
+    const priceCell = document.createElement('td');
+    priceCell.textContent = `Rs.${product.price}`;
+    tr.appendChild(priceCell);
+
+    const imgCell = document.createElement('td');
+    const imgElement = document.createElement('img');
+    imgElement.src = product.img;
+    imgElement.style.maxWidth = '100px';
+    imgCell.appendChild(imgElement);
+    tr.appendChild(imgCell);
+
+    const actionsCell = document.createElement('td');
+    const editButton = document.createElement('button');
+    editButton.textContent = 'Edit';
+    editButton.classList.add('actions-button'); // Add the actions-button class
+    editButton.addEventListener('click', () => {
+        editProduct(product);
+    });
+    actionsCell.appendChild(editButton);
+
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.classList.add('actions-button'); // Add the actions-button class
+    deleteButton.addEventListener('click', () => {
+        deleteProduct(product.id);
+    });
+    actionsCell.appendChild(deleteButton);
+
+    tr.appendChild(actionsCell);
+
+    document.getElementById('productlist').appendChild(tr);
+}
+
+function addFromLocalStorage() {
+    products.forEach(renderProducts);
+}
+
+function editProduct(product) {
+    productNameInput.value = product.name;
+    productDescInput.value = product.desc;
+    prodPriceInput.value = product.price;
+    imageUrlInput.value = product.img;
+}
+
+function deleteProduct(productId) {
+    products = products.filter(product => product.id !== productId);
+    localStorage.setItem('products', JSON.stringify(products));
+    document.getElementById('productlist').innerHTML = "";
+    products.forEach(renderProducts);
+}
+
+productNameInput.focus();
+</script>
+</body>
+</html>
